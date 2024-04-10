@@ -16,6 +16,7 @@ import FacultyProfile from './pages/user/FacultyProfile';
 import StudentProfile from './pages/user/StudentProfile';
 import JobInfo from './pages/JobInfo';
 
+import ViewFacultyTasks from './pages/task/TaskDisplayComponentFaculty';
 import ApplicationPage from './pages/application/ApplicationPage';
 import PostJob from './pages/faculty-jobs/PostJobPage';
 import ViewJobs from './pages/faculty-jobs/ViewJobsPage';
@@ -31,6 +32,23 @@ import HomeDefault from './pages/HomeDefault';
 import ProviderLayout, { UserContext } from './provider';
 import axios from 'axios';
 import Inbox from './pages/user/Inbox';
+
+import FeedbackPage from './pages/feedback/Feedback';
+import BugReportPage from './pages/bug-report/bug-report';
+import ViewStudents from './pages/Admin/ViewStudents';
+import ViewFaculties from './pages/Admin/ViewFaculties';
+import ViewCourses from './pages/Admin/ViewCourses';
+import CreateMessage from './pages/user/CreateMessage';
+
+// TODO: Merge following page with above viewAllCourses page, we only need one page for viewing courses
+import ViewAllCourses from './pages/courses/ViewAllCourses';
+import AddCourse from './pages/courses/AddCourse';
+import ViewCourse from './pages/courses/ViewCourse';
+import EditCourse from './pages/courses/EditCourse';
+
+import CreateTask from './pages/task/CreateTask';
+import ViewCurrentTasks from './pages/task/TasksDisplayComponent';
+import ViewAssignedTasks from './pages/task/TaskDisplayComponentFaculty';
 
 // adds jsonwebtoken if present to each api request
 axios.interceptors.request.use(
@@ -54,7 +72,7 @@ interface PrivateRouteProps {
   children: React.ReactNode;
 }
 
-function PrivateRoute({ role, userId, children }: PrivateRouteProps) {
+const PrivateRoute = ({ role, userId, children }: PrivateRouteProps) => {
   const userContext = useContext(UserContext);
 
   if (!userContext?.user) {
@@ -69,7 +87,7 @@ function PrivateRoute({ role, userId, children }: PrivateRouteProps) {
   } else {
     return <Navigate to="/unauthorized" />;
   }
-}
+};
 //make an if statement to check if the user is a student or faculty and then render the correct page for jobs
 function PrivateRouteJob() {
   const userContext = useContext(UserContext);
@@ -77,8 +95,9 @@ function PrivateRouteJob() {
   if (!userContext?.user) {
     return <Navigate to="/login" />;
   }
-
-  if (userContext.user.role === 'student') {
+  if (userContext.user.role === 'admin') {
+    return <ViewJobs />;
+  } else if (userContext.user.role === 'student') {
     return <ViewJobsStudent />;
   } else if (userContext.user.role === 'faculty') {
     return <ViewJobs />;
@@ -133,25 +152,94 @@ const App: React.FC = () => {
         <Route path="/" element={<ProviderLayout />}>
           {/* These routes are nested with user auth :D */}
           <Route index element={<Navigate to="/home" />} />
-          <Route path="/home" element={<Home />} />
 
-          {/* <Route
+          <Route path="/home" element={<Home />} />
+          {/* Profile module */}
+
+          <Route
+            path="/student-profile"
+            element={
+              <PrivateRoute role="student">
+                {' '}
+                <StudentProfile />{' '}
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/faculty-profile"
+            element={
+              <PrivateRoute role="faculty">
+                {' '}
+                <FacultyProfile />{' '}
+              </PrivateRoute>
+            }
+          />
+
+          {/* Job Module */}
+
+          <Route path="/create-task" element={<CreateTask />} />
+          <Route
+            path="/tasks/student"
+            element={
+              <PrivateRoute role="student">
+                <ViewCurrentTasks />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/tasks/faculty"
+            element={
+              <PrivateRoute role="faculty">
+                <ViewAssignedTasks />
+              </PrivateRoute>
+            }
+          />
+          <Route
             path="/student-profile"
             element={
               <PrivateRoute role="student">
                 <StudentProfile />
               </PrivateRoute>
             }
-          /> */}
-
-          <Route
-            path="/student-profile"
-            element={
-              <StudentProfile />
-            }
           />
 
           <Route path="/inbox" element={<Inbox />} />
+
+          <Route index element={<Navigate to="/home" />} />
+          <Route path="/inbox" element={<Inbox />} />
+          <Route
+            path="/view-courses"
+            element={
+              <PrivateRoute role="admin">
+                <ViewAllCourses />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/view-course/:id"
+            element={
+              <PrivateRoute role="admin">
+                <ViewCourse />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/add-course"
+            element={
+              <PrivateRoute role="admin">
+                <AddCourse />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/edit-course/:id"
+            element={
+              <PrivateRoute role="admin">
+                <EditCourse />
+              </PrivateRoute>
+            }
+          />
+
           <Route path="/jobs/details/:id" element={<JobInfo />} />
           <Route
             path="/post-job"
@@ -162,20 +250,16 @@ const App: React.FC = () => {
             }
           />
           <Route path="/jobs" element={<PrivateRouteJob />} />
-          <Route
-            path="/faculty-profile"
-            element={
-              <PrivateRoute role="faculty">
-                <FacultyProfile />
-              </PrivateRoute>
-            }
-          />
+
+          {/* Application Module */}
           <Route path="/application-form" element={<ApplicationPage />} />
+
           <Route
             path="/view-applications"
             element={
               <PrivateRoute role="faculty">
-                <ViewApplications />
+                {' '}
+                <ViewApplications />{' '}
               </PrivateRoute>
             }
           />
@@ -183,7 +267,8 @@ const App: React.FC = () => {
             path="/view-application/:id"
             element={
               <PrivateRoute role="faculty">
-                <ViewApplication />
+                {' '}
+                <ViewApplication />{' '}
               </PrivateRoute>
             }
           />
@@ -191,32 +276,69 @@ const App: React.FC = () => {
             path="/edit-application/:id"
             element={
               <PrivateRoute role="student">
-                <EditApplication />
+                {' '}
+                <EditApplication />{' '}
               </PrivateRoute>
             }
           />
+
+          {/* Student Performance Review Module */}
           <Route
             path="/evaluate-performance"
             element={
               <PrivateRoute role="faculty">
-                <EvaluatePerformance />
+                {' '}
+                <EvaluatePerformance />{' '}
               </PrivateRoute>
             }
           />
           <Route
-            path="/performance-result/:id"
+            path="/performance-result/:studentId"
             element={
               <PrivateRoutePerformanceReview>
-                <PerformanceResult />
+                {' '}
+                <PerformanceResult />{' '}
               </PrivateRoutePerformanceReview>
             }
           />
-
           <Route path="/user-data" element={<UserDataPage />} />
-          <Route path="*" element={<Home />} />
+
+          {/* FeedBack and Bug Report Module */}
+          <Route path="/feedback" element={<FeedbackPage />} />
+          <Route path="/bug-report" element={<BugReportPage />} />
+
+          {/* admin resources */}
+          <Route
+            path="/students"
+            element={
+              <PrivateRoute role="admin">
+                {' '}
+                <ViewStudents />{' '}
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/faculties"
+            element={
+              <PrivateRoute role="admin">
+                {' '}
+                <ViewFaculties />{' '}
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/courses"
+            element={
+              <PrivateRoute role="admin">
+                {' '}
+                <ViewCourses />{' '}
+              </PrivateRoute>
+            }
+          />
         </Route>
       </Routes>
     </Router>
   );
 };
+
 export default App;
